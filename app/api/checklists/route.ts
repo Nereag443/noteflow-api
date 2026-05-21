@@ -1,0 +1,47 @@
+import { NextResponse } from 'next/server';
+import { query } from '@/lib/db';
+import { z } from 'zod';
+
+const checklistSchema = z.object({
+    title: z.string().min(3),
+    priority: z.enum(['low', 'medium', 'high']).optional(),
+    archived: z.boolean().optional(),
+});
+
+export async function GET() {
+    try {
+        const checklists = await query(`
+            SELECT
+                n.*,
+                json_agg(ci.* ORDER BY ci.id) FILTER (WHERE ci.id IS NOT NULL) as items
+            FROM notes n
+            LEFT JOIN checklist_items ci ON n.id = ci.note_id
+            WHERE n.type = 'checklist'
+            GROUP BY n.id
+            ORDER BY n.created_at DESC
+            `);
+            return NextResponse.json(checklists);
+    } catch(error) {
+        console.error('GET checklists error:', error);
+        return NextResponse.json({ error: 'Error interno' }, { status: 500 });
+    }
+}
+
+export async function POST(request: Request) {
+    try {
+        const body = await request.json();
+        const result = checklistSchema.safeParse(body);
+        if(!result.success) {
+            return NextResponse.json({ errors: result.error.issues }, { status: 400 });
+        }
+        const { title, priority, archived } = result.data;
+        const [checklist] = await query(
+            'INSERT INTO notes (title, type, priority, archived) VALUES ($1, $2, $3, $4) RETURNING *',
+            [title, 'checklist', priority ?? null, archived ?? false]
+        );
+        return NextResponse.json(checklist, { status: 201 });
+    } catch (error) {
+        console.error('POST checklist error:', error);
+        return NextResponse.json({ error: 'Error interno' }, { status: 500 });
+    }
+}
