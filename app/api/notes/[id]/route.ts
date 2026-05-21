@@ -6,6 +6,8 @@ const updateSchema = z.object({
     title: z.string().min(3).optional(),
     content: z.string().optional(),
     color: z.string().optional(),
+    priority: z.enum(['low', 'medium', 'high']).optional(),
+    archived: z.boolean().optional(),
 })
 
 export async function GET (request: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -37,11 +39,18 @@ export async function PATCH (request: Request, { params }: {params: Promise<{ id
         if(!result.success) {
             return NextResponse.json({ errors: result.error.issues }, { status: 400 });
         }
-        const { title, content, color } = result.data;
+        const { title, content, color, priority, archived } = result.data;
         const { id } = await params;
         const [note] = await query(
-            'UPDATE notes SET title = COALESCE($1, title), content = COALESCE($2, content), color = COALESCE($3, color) WHERE id = $4 RETURNING *',
-            [title, content, color, id]
+            `UPDATE notes 
+            SET title = COALESCE($1, title), 
+                content = COALESCE($2, content), 
+                color = COALESCE($3, color),
+                priority = COALESCE($4, priority),
+                archived = CASE WHEN $5::boolean IS NOT NULL THEN $5::boolean ELSE archived END, 
+                updated_at = NOW()
+            WHERE id = $6 RETURNING *`,
+            [title, content, color, priority, archived, id]
         );
         if(!note) {
             return NextResponse.json({ error: 'Nota no encontrada' }, { status: 400 });
