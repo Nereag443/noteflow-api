@@ -7,7 +7,7 @@ El proyecto sigue el patrón cliente-servidor: la app móvil (cliente) se comuni
 App móvil (Expo) → API REST (Next.js) → PostgreSQL (Neon)
 ```
 
-## Descripción de carpetas
+## Estructura del proyecto
 ```
 noteflow-api/
 ├── app/
