@@ -144,7 +144,7 @@ Respuesta:
 |----------|-------------|
 | `DATABASE_URL` | Connection string de PostgreSQL (Neon) |
  
-Copia `.env.example` a `.env.local` y rellena los valores. El archivo `.env.local` nunca se sube al repositorio.
+Copia `.env.example` a `.env.local` y rellena los valores.
 
 ## Testing con Postman
 Se ha utilizado Postman para comprobar todos los endpoints de la API durante el desarrollo.

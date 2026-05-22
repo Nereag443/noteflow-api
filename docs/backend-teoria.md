@@ -35,13 +35,14 @@ Ejemplo en noteflow:
 DELETE /api/ideas/[id] — elimina una idea
 
 ## Códigos de estado
-|Código|Significado|Cuándo se usa|
-|200 OK|Éxito|GET y PATCH exitosos|
-|201 Created|Creado|POST exitoso|
-|204 No Content|Sin contenido|DELETE exitoso|
-|400 Bad Request|Datos inválidos|Validación con Zod fallida|
-|404 Not Found|No encontrado|El recurso no existe|
-|500 Internal Server Error|Error del servidor|Error inesperado en la API|
+| Código | Significado | Cuándo se usa |
+|--------|-------------|---------------|
+| 200 OK | Éxito | GET y PATCH exitosos |
+| 201 Created | Creado | POST exitoso |
+| 204 No Content| Sin contenido | DELETE exitoso |
+| 400 Bad Request | Datos inválidos | Validación con Zod fallida |
+| 404 Not Found | No encontrado | El recurso no existe |
+| 500 Internal Server Error |Error del servidor |Error inesperado en la API |
 
 Nunca se devuelve el error real de la base de datos al cliente — es información interna que un atacante podría aprovechar.
 
