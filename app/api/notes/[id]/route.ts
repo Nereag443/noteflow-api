@@ -1,6 +1,7 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
 import { query } from '@/lib/db';
 import { z } from 'zod';
+import { verifyToken, unauthorized } from '@/lib/auth';
 
 const updateSchema = z.object({
     title: z.string().min(3).optional(),
@@ -10,7 +11,11 @@ const updateSchema = z.object({
     archived: z.boolean().optional(),
 })
 
-export async function GET (request: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function GET (request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+    const auth = verifyToken(request);
+    if (!auth){
+        return unauthorized();
+    }
     try {
         const { id } = await params;
         const [note] = await query(`
@@ -32,7 +37,11 @@ export async function GET (request: Request, { params }: { params: Promise<{ id:
     }
 }
 
-export async function PATCH (request: Request, { params }: {params: Promise<{ id: string }> }) {
+export async function PATCH (request: NextRequest, { params }: {params: Promise<{ id: string }> }) {
+    const auth = verifyToken(request);
+    if (!auth){
+        return unauthorized();
+    }
     try {
         const body = await request.json();
         const result = updateSchema.safeParse(body);
@@ -62,7 +71,11 @@ export async function PATCH (request: Request, { params }: {params: Promise<{ id
     }
 }
 
-export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+    const auth = verifyToken(request);
+    if (!auth){
+        return unauthorized();
+    }
     try {
         const { id } = await params;
         await query('DELETE FROM notes WHERE id = $1', [id]);

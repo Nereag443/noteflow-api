@@ -1,6 +1,7 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
 import { query } from '@/lib/db';
 import { z } from 'zod';
+import { verifyToken, unauthorized } from '@/lib/auth';
 
 const noteSchema = z.object({
     title: z.string().min(3),
@@ -11,7 +12,11 @@ const noteSchema = z.object({
     archived: z.boolean().optional(),
 });
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+    const auth = verifyToken(request);
+    if(!auth){
+        return unauthorized();
+    }
     try {
         const notes = await query(`
             SELECT 
@@ -30,7 +35,11 @@ export async function GET() {
     }
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
+    const auth = verifyToken(request);
+    if(!auth){
+        return unauthorized();
+    }
     try {
         const body = await request.json();
         const result = noteSchema.safeParse(body);

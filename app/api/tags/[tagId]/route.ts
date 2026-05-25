@@ -1,10 +1,14 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
 import { query } from '@/lib/db';
+import { verifyToken, unauthorized } from '@/lib/auth';
 
-export async function DELETE(
-    _request: Request,
-    { params }: { params: Promise<{ tagId: string }> }
-) {
+type Params = { params: Promise<{ tagId: string }> };
+
+export async function DELETE(request: NextRequest, { params }: Params) {
+    const auth = verifyToken(request);
+    if (!auth){
+        return unauthorized();
+    }
     try {
         const { tagId } = await params;
         await query('DELETE FROM note_tags WHERE id = $1', [tagId]);

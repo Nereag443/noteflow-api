@@ -1,13 +1,20 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
 import { query } from '@/lib/db';
 import { z } from 'zod';
+import { verifyToken, unauthorized } from '@/lib/auth';
 
 const updateSchema = z.object({
     text: z.string().min(1).optional(),
     is_completed: z.boolean().optional(),
 })
 
-export async function PATCH(request :Request, { params }: { params: Promise<{ itemId: string }> }) {
+type Params = { params: Promise<{ itemId: string }> };
+
+export async function PATCH(request: NextRequest, { params }: Params) {
+    const auth = verifyToken(request);
+    if (!auth){
+        return unauthorized();
+    }
     try {
         const { itemId } = await params;
         const body = await request.json();
@@ -30,7 +37,11 @@ export async function PATCH(request :Request, { params }: { params: Promise<{ it
     }
 }
 
-export async function DELETE(request :Request, { params }: { params: Promise<{ itemId: string }> }) {
+export async function DELETE(request: NextRequest, { params }: Params) {
+    const auth = verifyToken(request);
+    if (!auth){
+        return unauthorized();
+    }
     try {
         const { itemId } = await params;
         await query('DELETE FROM checklist_items WHERE id = $1', [itemId]);

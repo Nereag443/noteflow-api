@@ -1,6 +1,7 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
 import { query } from '@/lib/db';
 import { z } from 'zod';
+import { verifyToken, unauthorized } from '@/lib/auth';
 
 type Params = { params: Promise<{ id: string }> }
 
@@ -10,7 +11,11 @@ const updateSchema = z.object({
     archived: z.boolean().optional(),
 });
 
-export async function GET(request: Request, { params }: Params) {
+export async function GET(request: NextRequest, { params }: Params) {
+    const auth = verifyToken(request);
+    if (!auth){
+        return unauthorized();
+    }
     try {
         const { id } = await params;
         const [checklist] = await query(`
@@ -31,7 +36,11 @@ export async function GET(request: Request, { params }: Params) {
     }
 }
 
-export async function PATCH(request: Request, { params }: Params) {
+export async function PATCH(request: NextRequest, { params }: Params) {
+    const auth = verifyToken(request);
+    if (!auth){
+        return unauthorized();
+    }
     try {
         const { id } = await params;
         const body = await request.json();
@@ -59,7 +68,12 @@ export async function PATCH(request: Request, { params }: Params) {
     }
 }
 
-export async function DELETE(request: Request, { params }: Params) {
+export async function DELETE(request: NextRequest, { params }: Params) {
+    const auth = verifyToken(request);
+    if (!auth){
+        return unauthorized();
+    }
+
     try {
         const { id } = await params;
         await query('DELETE FROM notes WHERE id = $1 AND type = $2', [id, 'checklist']);

@@ -1,15 +1,19 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
 import { query } from '@/lib/db';
 import { z } from 'zod';
+import { verifyToken, unauthorized } from '@/lib/auth';
 
 const tagSchema = z.object({
     text: z.string().min(1),
 });
 
-export async function GET(
-    _request: Request,
-    { params }: { params: Promise<{ id: string }> }
-) {
+type Params = { params: Promise<{ id: string }> }
+
+export async function GET(request: NextRequest, { params }: Params) {
+    const auth = verifyToken(request);
+    if (!auth){
+        return unauthorized();
+    }
     try {
         const { id } = await params;
         const tags = await query(
@@ -23,10 +27,11 @@ export async function GET(
     }
 }
 
-export async function POST(
-    request: Request,
-    { params }: { params: Promise<{ id: string }> }
-) {
+export async function POST(request: NextRequest, { params }: Params) {
+    const auth = verifyToken(request);
+    if (!auth){
+        return unauthorized();
+    }
     try {
         const { id } = await params;
         const body = await request.json();

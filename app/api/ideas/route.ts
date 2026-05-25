@@ -1,6 +1,7 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
 import { query } from '@/lib/db';
 import { z } from 'zod';
+import { verifyToken, unauthorized } from '@/lib/auth';
 
 const ideaSchema = z.object ({
     title: z.string().min(3),
@@ -19,7 +20,11 @@ interface NoteRow {
     updated_at: string;
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+    const auth = verifyToken(request);
+    if(!auth){
+        return unauthorized();
+    }
     try {
         const ideas = await query(`
             SELECT
@@ -37,7 +42,11 @@ export async function GET() {
         return NextResponse.json({ error: 'Error interno' }, { status: 500 });
     }
 }
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
+    const auth = verifyToken(request);
+    if(!auth){
+        return unauthorized();
+    }
     try {
         const body = await request.json();
         const result = ideaSchema.safeParse(body);
