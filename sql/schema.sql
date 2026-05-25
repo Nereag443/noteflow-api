@@ -20,3 +20,10 @@ CREATE TABLE note_tags (
     note_id UUID NOT NULL REFERENCES notes(id) ON DELETE CASCADE,
     text VARCHAR(100) NOT NULL
 );
+
+CREATE TABLE users (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    email varchar(255) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
