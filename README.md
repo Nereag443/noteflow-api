@@ -2,7 +2,7 @@
 API REST para la aplicación NoteFlow, construida con Next.js y PostgreSQL (Neon).
 
 ## Arquitectura
-El proyecto sigue el patrón cliente-servidor: la app móvil (cliente) se comunica con esta API (servidor), que es la única con acceso directo a la base de datos PostgreSQL. Cada petición pasa por validación con Zod antes de llegar a la base de datos.
+El proyecto sigue el patrón cliente-servidor: la app móvil (cliente) se comunica con esta API (servidor), que es la única con acceso directo a la base de datos PostgreSQL. Cada petición pasa por validación con Zod antes de llegar a la base de datos. Todos los endpoints(excepto `/api/auth`) requieren autenticación mediante JWT.
 ```
 App móvil (Expo) → API REST (Next.js) → PostgreSQL (Neon)
 ```
@@ -12,6 +12,14 @@ App móvil (Expo) → API REST (Next.js) → PostgreSQL (Neon)
 noteflow-api/
 ├── app/
 │   └── api/                         # Endpoints de la API
+│       ├── auth/
+│       │   ├── login/
+│       │   │   └── route.ts          # POST login
+│       │   └── register/
+│       │       └── route.ts          # POST registro
+│       ├── checklist-items/
+│       │   └── [itemId]/
+│       │       └── route.ts  
 │       ├── checklist-items/
 │       │   └── [itemId]/
 │       │       └── route.ts          # PATCH y DELETE de items
@@ -58,6 +66,7 @@ npm install
 3. Crea el archivo `.env.local` con tu connection string de Neon:
 ```bash
 DATABASE_URL=postgresql://usuario:contraseña@host/noteflow-db
+JWT_SECRET=tu_clave_secreta
 ```
  
 4. Ejecuta el schema en la consola SQL de Neon:
@@ -68,6 +77,19 @@ DATABASE_URL=postgresql://usuario:contraseña@host/noteflow-db
 5. Inicia el servidor de desarrollo:
 ```bash
 npm run dev
+```
+
+## Autenticación
+Todos los endpoints excepto `/api/auth/register` y `/api/auth/login` requieren autenticación mediante JWT.
+
+El token se obtiene al hacer login y debe enviarse en el header de cada petición:
+```
+Authorization: Bearer <token>
+```
+
+Sin token o con token inválido, la API devuelve `401 Unauthorized`:
+```json
+{ "error": "No autorizado" }
 ```
 
 ## Endpoints principales
@@ -109,6 +131,12 @@ npm run dev
 | DELETE | `/api/checklist-items/[itemId]` | Eliminar un item |
 | DELETE | `/api/tags/[tagId]` | Eliminar un tag |
 
+### Autenticación
+| Método | Ruta | Descripción | Auth |
+|--------|------|-------------|------|
+| POST | `/api/auth/register` | Registrar usuario | No |
+| POST | `/api/auth/login` | Iniciar sesión y obtener token | No |
+
 ## Manejo de errores
 La API devuelve errores normalizados en formato JSON con el código HTTP correspondiente.
 
@@ -118,6 +146,14 @@ Respuesta:
 ```json
 {
     "errors": [{ "message": "String must contain at least 3 character(s)" }]
+}
+```
+🔴 **401 - Unauthorized** → Token ausente o inválido  
+Ejemplo: Llamar a cualquier endpoint sin el header Authorization  
+Respuesta:
+```json
+{
+    "error": "No autorizado"
 }
 ```
 
@@ -143,6 +179,7 @@ Respuesta:
 | Variable | Descripción |
 |----------|-------------|
 | `DATABASE_URL` | Connection string de PostgreSQL (Neon) |
+| `JWT_SECRET` | Clave secreta para firmar los tokens JWT |
  
 Copia `.env.example` a `.env.local` y rellena los valores.
 
@@ -150,6 +187,10 @@ Copia `.env.example` a `.env.local` y rellena los valores.
 Se ha utilizado Postman para comprobar todos los endpoints de la API durante el desarrollo.
 
 Se han probado los endpoints con:
+- Registrar un usuario nuevo → `201 Created`
+- Registrar un usuario con email ya existente → `400 Bad Request`
+- Iniciar sesión con credenciales correctas → `200 OK`
+- Iniciar sesión con credenciales incorrectas → `401 Unauthorized`
 - Crear una nota con todos los campos correctos → `201 Created`
 - Crear una nota con título de menos de 3 caracteres → `400 Bad Request`
 - Crear una checklist con prioridad → `201 Created`
@@ -174,3 +215,4 @@ La documentación detallada del backend se puede encontrar en la carpeta [`/docs
 - El schema usa `ON DELETE CASCADE` — al eliminar una nota se eliminan automáticamente sus items y tags
 - Las fechas se devuelven en formato ISO 8601 (`created_at`, `updated_at`)
 - Los campos opcionales en PATCH usan `COALESCE` para no sobreescribir valores existentes
+- Los tokens JWT expiran en 7 días
