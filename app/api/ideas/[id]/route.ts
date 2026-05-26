@@ -22,7 +22,7 @@ const updateSchema = z.object({
 });
 
 export async function GET(request: NextRequest, { params }: Params) {
-    const auth = verifyToken(request);
+    const auth = await verifyToken(request);
     if (!auth){
         return unauthorized();
     }
@@ -47,7 +47,7 @@ export async function GET(request: NextRequest, { params }: Params) {
 }
 
 export async function PATCH(request: NextRequest, { params }: Params) {
-    const auth = verifyToken(request);
+    const auth = await verifyToken(request);
     if (!auth){
         return unauthorized();
     }
@@ -80,7 +80,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
 }
 
 export async function DELETE(request: NextRequest, { params }: Params) {
-    const auth = verifyToken(request);
+    const auth = await verifyToken(request);
     if (!auth){
         return unauthorized();
     }

@@ -10,7 +10,7 @@ const checklistSchema = z.object({
 });
 
 export async function GET(request: NextRequest) {
-    const auth = verifyToken(request);
+    const auth = await verifyToken(request);
     if(!auth){
         return unauthorized();
     }
@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-    const auth = verifyToken(request);
+    const auth = await verifyToken(request);
     if(!auth){
         return unauthorized();
     }

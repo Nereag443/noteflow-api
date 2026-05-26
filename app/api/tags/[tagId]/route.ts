@@ -5,7 +5,7 @@ import { verifyToken, unauthorized } from '@/lib/auth';
 type Params = { params: Promise<{ tagId: string }> };
 
 export async function DELETE(request: NextRequest, { params }: Params) {
-    const auth = verifyToken(request);
+    const auth = await verifyToken(request);
     if (!auth){
         return unauthorized();
     }

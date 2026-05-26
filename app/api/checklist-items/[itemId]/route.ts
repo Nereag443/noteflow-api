@@ -11,7 +11,7 @@ const updateSchema = z.object({
 type Params = { params: Promise<{ itemId: string }> };
 
 export async function PATCH(request: NextRequest, { params }: Params) {
-    const auth = verifyToken(request);
+    const auth = await verifyToken(request);
     if (!auth){
         return unauthorized();
     }
@@ -38,7 +38,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
 }
 
 export async function DELETE(request: NextRequest, { params }: Params) {
-    const auth = verifyToken(request);
+    const auth = await verifyToken(request);
     if (!auth){
         return unauthorized();
     }

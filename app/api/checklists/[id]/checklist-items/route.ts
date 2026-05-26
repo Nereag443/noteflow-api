@@ -10,7 +10,7 @@ const itemSchema = z.object({
 type Params = { params: Promise<{ id: string }> }
 
 export async function GET(request: NextRequest, { params }: Params) {
-    const auth = verifyToken(request);
+    const auth = await verifyToken(request);
     if (!auth){
         return unauthorized();
     }
@@ -28,7 +28,7 @@ export async function GET(request: NextRequest, { params }: Params) {
 }
 
 export async function POST(request: NextRequest, { params }: Params) {
-    const auth = verifyToken(request);
+    const auth = await verifyToken(request);
     if (!auth){
         return unauthorized();
     }

@@ -1,20 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
-import jwt from 'jsonwebtoken';
+import admin from './firebase-admin';
 
 export interface AuthPayload{
     userId: string;
     email: string;
 }
 
-export function verifyToken(request: NextRequest): AuthPayload | null {
+export async function verifyToken(request: NextRequest): Promise<AuthPayload | null> {
     const authHeader = request.headers.get('Authorization');
     if(!authHeader  || !authHeader.startsWith('Bearer ')) {
         return null;
     }
     const token = authHeader.split(' ')[1];
     try{
-        const payload = jwt.verify(token, process.env.JWT_SECRET!) as AuthPayload;
-        return payload;
+        const decoded = await admin.auth().verifyIdToken(token);
+        return { userId: decoded.uid, email: decoded.email ?? ''};
     } catch{
         return null;
     }

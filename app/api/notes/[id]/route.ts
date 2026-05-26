@@ -12,7 +12,7 @@ const updateSchema = z.object({
 })
 
 export async function GET (request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-    const auth = verifyToken(request);
+    const auth = await verifyToken(request);
     if (!auth){
         return unauthorized();
     }
@@ -38,7 +38,7 @@ export async function GET (request: NextRequest, { params }: { params: Promise<{
 }
 
 export async function PATCH (request: NextRequest, { params }: {params: Promise<{ id: string }> }) {
-    const auth = verifyToken(request);
+    const auth = await verifyToken(request);
     if (!auth){
         return unauthorized();
     }
@@ -72,7 +72,7 @@ export async function PATCH (request: NextRequest, { params }: {params: Promise<
 }
 
 export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-    const auth = verifyToken(request);
+    const auth = await verifyToken(request);
     if (!auth){
         return unauthorized();
     }
