@@ -16,7 +16,7 @@ export async function POST(request: NextRequest){
     if(!auth) return unauthorized();
     try {
         const{fileName, contentType} = await request.json();
-        const key = `avatars/&{auth.userId}/&{Date.now()}-&{fileName}`;
+        const key = `avatars/&{auth.userId}/${Date.now()}-&{fileName}`;
         const command = new PutObjectCommand({
             Bucket: process.env.AWS_BUCKET_NAME!,
             Key: key,
