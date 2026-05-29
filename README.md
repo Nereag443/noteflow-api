@@ -2,16 +2,23 @@
 API REST para la aplicación NoteFlow, construida con Next.js y PostgreSQL (Neon).
 
 ## Arquitectura
-El proyecto sigue el patrón cliente-servidor: la app móvil (cliente) se comunica con esta API (servidor), que es la única con acceso directo a la base de datos PostgreSQL. Cada petición pasa por validación con Zod antes de llegar a la base de datos. Todos los endpoints(excepto `/api/auth`) requieren autenticación mediante JWT.
+El proyecto sigue el patrón cliente-servidor: la app móvil (cliente) se comunica con esta API (servidor), que es la única con acceso directo a la base de datos PostgreSQL. Cada petición pasa por validación con Zod antes de llegar a la base de datos. Todos los endpoints(excepto `/api/auth`).
+
 ```
 App móvil (Expo) → API REST (Next.js) → PostgreSQL (Neon)
+                        ↕
+                   Firebase Auth
+                        ↕
+                     AWS S3
 ```
 
 ## Estructura del proyecto
 ```
 noteflow-api/
 ├── app/
-│   └── api/                         # Endpoints de la API
+│   └── api/                          # Endpoints de la API
+│       ├── avatar/
+│       │   └── route.ts              # DELETE avatar de S3
 │       ├── auth/
 │       │   ├── login/
 │       │   │   └── route.ts          # POST login
@@ -39,14 +46,19 @@ noteflow-api/
 │       │   ├── [id]/
 │       │   │   └── route.ts          # GET, PATCH y DELETE de una nota
 │       │   └── route.ts              # GET y POST notas
-│       └── tags/
-│           └── [tagId]/
-│               └── route.ts          # DELETE de un tag
+│       ├── tags/
+│       │    └── [tagId]/
+│       │        └── route.ts          # DELETE de un tag
+│       └── upload/
+│           └── route.ts               # POST para generar presigned URL de S3
 ├── docs/
+│   ├── aws-s3-flujo-md
 │   ├── backend-teoria.md
 │   └── seguridad-api.md
 ├── lib/
-│   └── db.ts                         # Módulo de conexión a PostgreSQL
+│   ├── auth.ts                        # Verificación de tokens Firebase
+│   ├── db.ts                          # Módulo de conexión a PostgreSQL
+│   └── firebase-admin.ts              # Inicialización de Firebase Admin SDK
 └── sql/
     ├── schema.sql
     └── queries.sql
@@ -63,10 +75,16 @@ git clone https://github.com/Nereag443/noteflow-api.git
 npm install
 ```
  
-3. Crea el archivo `.env.local` con tu connection string de Neon:
+3. Crea el archivo `.env.local` con tus variables de entorno:
 ```bash
 DATABASE_URL=postgresql://usuario:contraseña@host/noteflow-db
-JWT_SECRET=tu_clave_secreta
+FIREBASE_PROJECT_ID=tu_project_id
+FIREBASE_CLIENT_EMAIL=tu_client_email
+FIREBASE_PRIVATE_KEY=tu_private_key
+AWS_ACCESS_KEY_ID=tu_access_key_id
+AWS_SECRET_ACCESS_KEY=tu_secret_access_key
+AWS_REGION=eu-west-1
+AWS_BUCKET_NAME=noteflow-avatars
 ```
  
 4. Ejecuta el schema en la consola SQL de Neon:
@@ -80,19 +98,32 @@ npm run dev
 ```
 
 ## Autenticación
-Todos los endpoints excepto `/api/auth/register` y `/api/auth/login` requieren autenticación mediante JWT.
+Todos los endpoints excepto `/api/auth/register` y `/api/auth/login` requieren un token de Firebase en el header de cada petición:
 
-El token se obtiene al hacer login y debe enviarse en el header de cada petición:
 ```
-Authorization: Bearer <token>
+Authorization: Bearer <firebase_token>
 ```
 
-Sin token o con token inválido, la API devuelve `401 Unauthorized`:
+El token se obtiene en la app móvil con Firebase Auth y se verifica en el backend con Firebase Admin SDK. Sin token o con token inválido, la API devuelve `401 Unauthorized`:
+
 ```json
 { "error": "No autorizado" }
 ```
 
 ## Endpoints principales
+
+### Autenticación
+| Método | Ruta | Descripción | Auth |
+|--------|------|-------------|------|
+| POST | `/api/auth/register` | Registrar usuario | No |
+| POST | `/api/auth/login` | Iniciar sesión | No |
+
+### Avatar
+| Método | Ruta | Descripción |
+|--------|------|-------------|
+| POST | `/api/upload` | Generar presigned URL para subir imagen a S3 |
+| DELETE | `/api/avatar` | Eliminar imagen de S3 |
+
 ### Notas
 | Método | Ruta | Descripción |
 |--------|------|-------------|
@@ -130,12 +161,6 @@ Sin token o con token inválido, la API devuelve `401 Unauthorized`:
 | PATCH | `/api/checklist-items/[itemId]` | Actualizar un item |
 | DELETE | `/api/checklist-items/[itemId]` | Eliminar un item |
 | DELETE | `/api/tags/[tagId]` | Eliminar un tag |
-
-### Autenticación
-| Método | Ruta | Descripción | Auth |
-|--------|------|-------------|------|
-| POST | `/api/auth/register` | Registrar usuario | No |
-| POST | `/api/auth/login` | Iniciar sesión y obtener token | No |
 
 ## Manejo de errores
 La API devuelve errores normalizados en formato JSON con el código HTTP correspondiente.
@@ -179,7 +204,13 @@ Respuesta:
 | Variable | Descripción |
 |----------|-------------|
 | `DATABASE_URL` | Connection string de PostgreSQL (Neon) |
-| `JWT_SECRET` | Clave secreta para firmar los tokens JWT |
+| `FIREBASE_PROJECT_ID` | ID del proyecto de Firebase |
+| `FIREBASE_CLIENT_EMAIL` | Email del service account de Firebase |
+| `FIREBASE_PRIVATE_KEY` | Clave privada del service account de Firebase |
+| `AWS_ACCESS_KEY_ID` | Access key del usuario IAM de AWS |
+| `AWS_SECRET_ACCESS_KEY` | Secret access key del usuario IAM de AWS |
+| `AWS_REGION` | Región del bucket S3 (ej. `eu-west-1`) |
+| `AWS_BUCKET_NAME` | Nombre del bucket S3 |
  
 Copia `.env.example` a `.env.local` y rellena los valores.
 
@@ -211,8 +242,13 @@ Se han probado los endpoints con:
 ## Documentación
 La documentación detallada del backend se puede encontrar en la carpeta [`/docs`](/docs/).
 
+- [`aws-s3-flujo.md`](/docs/aws-s3-flujo.md) — diagrama de flujo de subida de imágenes a AWS S3
+- [`backend-teoria.md`](/docs/backend-teoria.md) — arquitectura, REST, SQL, JOINs y diagrama ER
+- [`seguridad-api.md`](/docs/seguridad-api.md) — SQL injection, consultas parametrizadas y variables de entorno
+
 ## Notas
 - El schema usa `ON DELETE CASCADE` — al eliminar una nota se eliminan automáticamente sus items y tags
 - Las fechas se devuelven en formato ISO 8601 (`created_at`, `updated_at`)
 - Los campos opcionales en PATCH usan `COALESCE` para no sobreescribir valores existentes
-- Los tokens JWT expiran en 7 días
+- La autenticación usa Firebase Admin SDK para verificar tokens en el servidor
+- Las imágenes se suben directamente a S3 desde el móvil usando presigned URLs
