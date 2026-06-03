@@ -7,7 +7,7 @@ const checklistSchema = z.object({
     title: z.string().min(3),
     priority: z.enum(['low', 'medium', 'high']).optional(),
     archived: z.boolean().optional(),
-    deadline: z.string().optional,
+    deadline: z.string().optional(),
 });
 
 export async function GET(request: NextRequest) {
