@@ -9,6 +9,7 @@ const updateSchema = z.object({
     title: z.string().min(3).optional(),
     priority: z.enum(['low', 'medium', 'high']).optional(),
     archived: z.boolean().optional(),
+    deadline: z.string().nullable().optional(),
 });
 
 export async function GET(request: NextRequest, { params }: Params) {
@@ -48,15 +49,16 @@ export async function PATCH(request: NextRequest, { params }: Params) {
         if (!result.success) {
             return NextResponse.json({ errors: result.error.issues }, { status: 400 });
         }
-        const { title, priority, archived } = result.data;
+        const { title, priority, archived, deadline } = result.data;
         const [checklist] = await query(
             `UPDATE notes 
              SET title = COALESCE($1, title),
                  priority = COALESCE($2, priority),
                  archived = CASE WHEN $3::boolean IS NOT NULL THEN $3::boolean ELSE archived END,
+                 deadline = CASE WHEN $4::text IS NOT NULL THEN $4::timestamptz ELSE deadline END,
                  updated_at = NOW()
-             WHERE id = $4 AND type = 'checklist' RETURNING *`,
-            [title ?? null, priority ?? null, archived ?? null, id]
+             WHERE id = $5 AND type = 'checklist' RETURNING *`,
+            [title ?? null, priority ?? null, archived ?? null, deadline ?? null, id]
         );
         if (!checklist) {
             return NextResponse.json({ error: 'Checklist no encontrada' }, { status: 404 });

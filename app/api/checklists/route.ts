@@ -7,6 +7,7 @@ const checklistSchema = z.object({
     title: z.string().min(3),
     priority: z.enum(['low', 'medium', 'high']).optional(),
     archived: z.boolean().optional(),
+    deadline: z.string().optional,
 });
 
 export async function GET(request: NextRequest) {
@@ -43,10 +44,10 @@ export async function POST(request: NextRequest) {
         if(!result.success) {
             return NextResponse.json({ errors: result.error.issues }, { status: 400 });
         }
-        const { title, priority, archived } = result.data;
+        const { title, priority, archived, deadline } = result.data;
         const [checklist] = await query(
-            'INSERT INTO notes (title, type, priority, archived) VALUES ($1, $2, $3, $4) RETURNING *',
-            [title, 'checklist', priority ?? null, archived ?? false]
+            'INSERT INTO notes (title, type, priority, archived, deadline) VALUES ($1, $2, $3, $4, $5) RETURNING *',
+            [title, 'checklist', priority ?? null, archived ?? false, deadline ?? null]
         );
         return NextResponse.json(checklist, { status: 201 });
     } catch (error) {
