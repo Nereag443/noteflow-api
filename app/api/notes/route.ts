@@ -10,6 +10,9 @@ const noteSchema = z.object({
     color: z.string().optional(),
     priority: z.enum(['low', 'medium', 'high']).optional(),
     archived: z.boolean().optional(),
+    latitude: z.number().optional(),
+    longitude: z.number().optional(),
+    location_name: z.string().optional(),
 });
 
 export async function GET(request: NextRequest) {
@@ -46,10 +49,10 @@ export async function POST(request: NextRequest) {
         if (!result.success) {
             return NextResponse.json({ errors: result.error.issues }, { status: 400 });
         }
-        const { title, type, content, color, priority, archived } = result.data;
+        const { title, type, content, color, priority, archived, latitude, longitude, location_name } = result.data;
         const [note] = await query(
-            'INSERT INTO notes (title, type, content, color, priority, archived) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
-            [title, type, content, color, priority ?? null, archived ?? false]
+            'INSERT INTO notes (title, type, content, color, priority, archived, latitude, longitude, location_name) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *',
+            [title, type, content, color, priority ?? null, archived ?? false, latitude ?? null, longitude ?? null, location_name ?? null]
         );
         return NextResponse.json(note, { status: 201 });
     } catch {
