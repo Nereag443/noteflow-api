@@ -1,6 +1,15 @@
 # noteflow-api
 API REST para la aplicación NoteFlow, construida con Next.js y PostgreSQL (Neon).
 
+## Tecnologías utilizadas
+
+ - [Next.js](https://nextjs.org)
+ - [TypeScript](https://www.typescriptlang.org/)
+ - [Firebase Admin SDK](https://firebase.google.com)
+ - [Neon PostgreSQL](https://neon.com)
+ - [AWS S3](https://aws.amazon.com/es/s3/)
+ - [Zod](https://zod.dev/)
+
 ## Arquitectura
 El proyecto sigue el patrón cliente-servidor: la app móvil (cliente) se comunica con esta API (servidor), que es la única con acceso directo a la base de datos PostgreSQL. Cada petición pasa por validación con Zod antes de llegar a la base de datos. Todos los endpoints(excepto `/api/auth`).
 
@@ -19,14 +28,6 @@ noteflow-api/
 │   └── api/                          # Endpoints de la API
 │       ├── avatar/
 │       │   └── route.ts              # DELETE avatar de S3
-│       ├── auth/
-│       │   ├── login/
-│       │   │   └── route.ts          # POST login
-│       │   └── register/
-│       │       └── route.ts          # POST registro
-│       ├── checklist-items/
-│       │   └── [itemId]/
-│       │       └── route.ts  
 │       ├── checklist-items/
 │       │   └── [itemId]/
 │       │       └── route.ts          # PATCH y DELETE de items
@@ -219,23 +220,15 @@ Se ha utilizado Postman para comprobar todos los endpoints de la API durante el 
 
 Se han probado los endpoints con:
 - Registrar un usuario nuevo → `201 Created`
-- Registrar un usuario con email ya existente → `400 Bad Request`
-- Iniciar sesión con credenciales correctas → `200 OK`
 - Iniciar sesión con credenciales incorrectas → `401 Unauthorized`
 - Crear una nota con todos los campos correctos → `201 Created`
-- Crear una nota con título de menos de 3 caracteres → `400 Bad Request`
 - Crear una checklist con prioridad → `201 Created`
 - Crear una idea con tags → `201 Created`
-- Obtener todas las notas → `200 OK`
-- Obtener una nota por ID → `200 OK`
 - Obtener una nota con ID inexistente → `404 Not Found`
 - Editar una nota existente → `200 OK`
-- Editar una nota que no existe → `404 Not Found`
 - Archivar una nota → `200 OK`
 - Eliminar una nota existente → `204 No Content`
 - Añadir un item a una checklist → `201 Created`
-- Marcar un item como completado → `200 OK`
-- Eliminar un item de checklist → `204 No Content`
 - Añadir un tag a una idea → `201 Created`
 - Eliminar un tag → `204 No Content`
 
