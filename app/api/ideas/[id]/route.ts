@@ -11,6 +11,7 @@ interface NoteRow {
     archived: boolean;
     created_at: string;
     updated_at: string;
+    content: string | null;
 }
 
 type Params = { params: Promise<{ id: string }> }
@@ -66,10 +67,10 @@ export async function PATCH(request: NextRequest, { params }: Params) {
              SET title = COALESCE($1, title),
                  color = COALESCE($2, color),
                  archived = CASE WHEN $3::boolean IS NOT NULL THEN $3::boolean ELSE archived END,
-                 content = COALESCE($4, content)
+                 content = COALESCE($4, content),
                  updated_at = NOW()
              WHERE id = $5 AND type = 'idea' RETURNING *`,
-            [title ?? null, color ?? null, archived ?? null, id, content]
+            [title ?? null, color ?? null, archived ?? null, content, id]
         );
         if (!idea) {
             return NextResponse.json({ error: 'Idea no encontrada' }, { status: 404 });
