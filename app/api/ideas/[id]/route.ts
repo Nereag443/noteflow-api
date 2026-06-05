@@ -19,6 +19,7 @@ const updateSchema = z.object({
     title: z.string().min(3).optional(),
     color: z.string().optional(),
     archived: z.boolean().optional(),
+    content: z.string().optional(),
 });
 
 export async function GET(request: NextRequest, { params }: Params) {
@@ -59,15 +60,16 @@ export async function PATCH(request: NextRequest, { params }: Params) {
         if (!result.success) {
             return NextResponse.json({ errors: result.error.issues }, { status: 400 });
         }
-        const { title, color, archived } = result.data;
+        const { title, color, archived, content } = result.data;
         const [idea] = await query<NoteRow>(
             `UPDATE notes 
              SET title = COALESCE($1, title),
                  color = COALESCE($2, color),
                  archived = CASE WHEN $3::boolean IS NOT NULL THEN $3::boolean ELSE archived END,
+                 content = COALESCE($4, content)
                  updated_at = NOW()
-             WHERE id = $4 AND type = 'idea' RETURNING *`,
-            [title ?? null, color ?? null, archived ?? null, id]
+             WHERE id = $5 AND type = 'idea' RETURNING *`,
+            [title ?? null, color ?? null, archived ?? null, id, content]
         );
         if (!idea) {
             return NextResponse.json({ error: 'Idea no encontrada' }, { status: 404 });
