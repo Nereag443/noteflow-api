@@ -8,6 +8,9 @@ const ideaSchema = z.object ({
     color: z.string().optional(),
     archived: z.boolean().optional(),
     tags: z.array(z.string()).optional(),
+    latitude: z.number().optional(),
+    longitude: z.number().optional(),
+    location_name: z.string().optional(),
 })
 
 interface NoteRow {
@@ -53,10 +56,10 @@ export async function POST(request: NextRequest) {
         if(!result.success) {
             return NextResponse.json({ errors: result.error.issues }, { status: 400 });
         }
-        const { title, color, archived, tags } = result.data;
+        const { title, color, archived, tags, latitude, longitude, location_name } = result.data;
         const [idea] = await query<NoteRow>(
-            'INSERT INTO notes (title, type, color, archived) VALUES ($1, $2, $3, $4) RETURNING *',
-            [title, 'idea', color ?? null, archived ?? false]
+            'INSERT INTO notes (title, type, color, archived, latitude, longitude, location_name) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *',
+            [title, 'idea', color ?? null, archived ?? false, latitude ?? null, longitude ?? null, location_name ?? null]
         );
         if(tags && tags.length > 0) {
             await Promise.all(tags.map((tag) =>
